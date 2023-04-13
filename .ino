@@ -1,3 +1,4 @@
+
 #include <SoftwareSerial.h>
 #include "VoiceRecognitionV3.h"
 #include <Servo.h>
@@ -13,7 +14,14 @@ VR myVR(2, 3); // 2:RX 3:TX, you can choose your favourite pins.
 uint8_t records[7]; // save record
 uint8_t buf[64];
 
-int led = 13;
+int buttonPin = 13; // button to trigger pushups
+int ledPin = 12; // LED to indicate button press
+
+int ledState = HIGH; // current state of the LED
+int buttonState; // current state of the button
+int lastButtonState = LOW; // previous state of the button
+unsigned long lastDebounceTime = 0; // last time the button was pressed
+unsigned long debounceDelay = 50; // debounce time; increase if the output flickers
 
 Servo servo1;
 Servo servo2;
@@ -93,11 +101,14 @@ void setup()
   Serial.println("Elechouse Voice Recognition V3 Module\r\nControl Servos sample");
 
   servo1.attach(7);
-  servo2.attach(5);
-  servo3.attach(6);
-  servo4.attach(9);
+  servo2.attach(6);
+  servo3.attach(9);
+  servo4.attach(5);
 
   servo4.write(servo4Pos);
+
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
 
   if (myVR.clear() == 0)
   {
@@ -145,6 +156,7 @@ void setup()
     Serial.println("puzzy loaded");
   }
 }
+
 void moveServos()
 {
   const int servoDelay = 20; // delay between servo movements
@@ -153,7 +165,7 @@ void moveServos()
 
   delay(500);
 
-  for (int i = 0; i < 2; i++) // do two pushups
+  for (int i = 0; i < 10; i++) // do two pushups
   {
     for (int pos = 0; pos <= 60; pos += 2) // increment all servo positions together
     {
@@ -193,6 +205,38 @@ void loop()
 {
   int ret;
   int curseCount = 0; // initialize curse count to 0
+
+  // read the state of the button
+  int reading = digitalRead(buttonPin);
+
+  // check if the button state has changed
+  if (reading != lastButtonState)
+  {
+    // reset the debounce timer
+    lastDebounceTime = millis();
+  }
+
+  // check if the debounce delay has passed
+  if ((millis() - lastDebounceTime) > debounceDelay)
+  {
+    // if the button state has changed, update the state and trigger pushups
+    if (reading != buttonState)
+    {
+      buttonState = reading;
+
+      // toggle the LED to indicate button press
+      if (buttonState == LOW)
+      {
+        ledState = !ledState;
+        digitalWrite(ledPin, ledState);
+        curseCount++; // increment curse count
+        moveServos(); // do two pushups
+      }
+    }
+  }
+
+  lastButtonState = reading;
+
   ret = myVR.recognize(buf, 50);
 
   if (ret > 0)
