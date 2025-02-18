@@ -1,0 +1,2 @@
+This project utilizes an Arduino to control a 4-servo robotic arm, which is triggered by both a button press and voice commands. The arm performs a series of movements, resembling push-ups, when a button is pressed or when certain voice commands (curse words) are recognized. The VoiceRecognitionV3 module is used to process voice commands, while the servos are controlled by the Arduino. An LED indicates the button press state, and the system is debounced to prevent false inputs. The servos' movements are synchronized, creating a dynamic action of push-ups when activated.
+
